@@ -20,15 +20,8 @@ TypeOK ==
   /\ alloc \in [Passengers -> SUBSET Cars]
   /\ \A c \in Cars: remaining[c] \in (Nat \cup {0})
 
-
-\* available == Cars \ (UNION {unsat[p] \cup alloc[p]: p \in Passengers})
-(* available == UNION {C \in SUBSET Cars: Cardinality(C) = 1
- /\ remaining[C] \subseteq Nat}*)
-
 available == {c \in Cars: remaining[c] > 0} 
    
-\* available1 == Cars \ (UNION {remaining[c] = {0}: c \in Cars /\ remaining[c] = {0}})
-
 Init == 
   /\ unsat = [p \in Passengers |-> {}]
   /\ alloc = [p \in Passengers |-> {}]
@@ -91,5 +84,5 @@ THEOREM CarDispatcher => InfOftenSatisfied
 
 =============================================================================
 \* Modification History
-\* Last modified Fri Nov 17 11:49:08 PST 2017 by nanzhu
+\* Last modified Fri Nov 17 11:59:40 PST 2017 by nanzhu
 \* Created Thu Nov 16 12:47:26 PST 2017 by nanzhu
