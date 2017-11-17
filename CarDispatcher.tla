@@ -33,16 +33,9 @@ Request(p,C) ==
 
 Pickup(p,C) ==
   /\ C = unsat[p]
-  /\ unsat[p] # {}
   /\ alloc[p] = {}
   /\ alloc' = [alloc EXCEPT ![p] = C]
-  /\ UNCHANGED unsat  
-  
-InTransit(p, C) ==
-  /\ unsat[p] # {}   
-  /\ unsat[p] = alloc[p]
-  /\ unsat' = [unsat EXCEPT ![p] = {}]
-  /\ UNCHANGED alloc
+  /\ unsat' = [unsat EXCEPT ![p] = {}]  
   
 Dropoff(p) ==
   /\ alloc[p] # {}
@@ -54,7 +47,6 @@ Next ==
   \/ \E p \in Passengers, C \in SUBSET Cars : 
          /\ \/ Request(p,C)
             \/ Pickup(p,C)
-            \/ InTransit(p, C)
          /\ Cardinality(C) = 1
   
 vars == <<unsat,alloc>>
@@ -74,16 +66,15 @@ InfOftenSatisfied ==
 CarDispatcher == 
   /\ Init /\ [][Next]_vars
   /\ \A p \in Passengers: WF_vars(Dropoff(p))
-  /\ \A p \in Passengers: SF_vars(\E C \in SUBSET Cars: Pickup(p,C))
+  /\ \A p \in Passengers: SF_vars(\E C \in SUBSET unsat[p]: Pickup(p,C))
 
 THEOREM CarDispatcher => []TypeOK
 THEOREM CarDispatcher => []ResourceMutex
 THEOREM CarDispatcher => PassengerWillBeDroppedOff
-\* THEOREM CarDispatcher2 => ClientsWillReturn
 THEOREM CarDispatcher => PassengerWillBePickedup
 THEOREM CarDispatcher => InfOftenSatisfied
 
 =============================================================================
 \* Modification History
-\* Last modified Fri Nov 17 00:27:21 PST 2017 by nanzhu
+\* Last modified Fri Nov 17 09:36:46 PST 2017 by nanzhu
 \* Created Thu Nov 16 12:47:26 PST 2017 by nanzhu
