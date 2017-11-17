@@ -1,17 +1,19 @@
 --------------------------- MODULE CarDispatcher ---------------------------
 
-EXTENDS FiniteSets, TLC
+EXTENDS FiniteSets, TLC, Integers,Sequences
 
 CONSTANTS
   Passengers,     \* set of all passengers
-  Cars    \* set of all cars
+  Cars,    \* set of all cars
+  CarCapacity \* 
 
 ASSUME
   IsFiniteSet(Cars)
 
 VARIABLES
-  unsat,       \* set of all outstanding requests per process
-  alloc        \* set of resources allocated to given process
+  unsat,       \* set of all outstanding requests per passengers
+  alloc        \* set of resources allocated to given passenger
+\*  remaining
 
 TypeOK ==
   /\ unsat \in [Passengers -> SUBSET Cars]
@@ -23,25 +25,31 @@ available == Cars \ (UNION {alloc[p] : p \in Passengers})
 Init == 
   /\ unsat = [p \in Passengers |-> {}]
   /\ alloc = [p \in Passengers |-> {}]
+\*  /\ remaining = [c \in Cars |-> CarCapacity]
 
-\* TODO: do we need to track C has been allocated? 
 Request(p,C) ==
   /\ Cardinality(C) = 1
+  /\ C \subseteq Cars
   /\ unsat[p] = {}
   /\ alloc[p] = {}
   /\ unsat' = [unsat EXCEPT ![p] = C]
   /\ UNCHANGED alloc
+\*  /\ UNCHANGED remaining
 
 Pickup(p,C) ==
   /\ Cardinality(C) = 1
+  /\ C \subseteq Cars
+\*  /\ remaining[CHOOSE c \in C: TRUE] \in Nat
   /\ C \subseteq available \cap unsat[p]
+\*  /\ remaining' = [remaining EXCEPT ![CHOOSE c \in C: TRUE] = remaining[CHOOSE c \in C: TRUE] - 1] 
   /\ alloc' = [alloc EXCEPT ![p] = C]
   /\ unsat' = [unsat EXCEPT ![p] = {}]  
 
 Dropoff(p,C) ==
   /\ Cardinality(C) = 1
-  /\ C \subseteq Cars
+  /\ C \subseteq Cars 
   /\ C = alloc[p]
+\*  /\ remaining' = [remaining EXCEPT ![CHOOSE c \in C: TRUE] = remaining[CHOOSE c \in C: TRUE] + 1]
   /\ alloc' = [alloc EXCEPT ![p] = {}]
   /\ UNCHANGED unsat
   
@@ -59,7 +67,7 @@ PassengerWillBeDroppedOff ==
   \A p \in Passengers : unsat[p]={} ~> (alloc[p]={} /\ unsat[p] = {})
 
 PassengerWillBePickedup ==
-  \A p \in Passengers, c \in Cars : c \in unsat[p] ~> c \in alloc[p]
+  \A p \in Passengers, c \in SUBSET Cars: c \in unsat[p] ~> c \in alloc[p]
 
 InfOftenSatisfied == 
   \A p \in Passengers : []<>(unsat[p] = {})
@@ -69,7 +77,7 @@ Symmetry == Permutations(Passengers) \cup Permutations(Cars)
 CarDispatcher == 
   /\ Init /\ [][Next]_vars
   /\ \A p \in Passengers: WF_vars(Dropoff(p, alloc[p]))
-  /\ \A p \in Passengers: SF_vars(\E C \in Cars: Pickup(p,C))
+  /\ \A p \in Passengers: SF_vars(\E C \in SUBSET Cars: Pickup(p,C))
 
 \*PCSpec == PCInit /\ [][PCNext]_<<rmState, aState, msgs>>
 
@@ -90,5 +98,5 @@ THEOREM CarDispatcher => InfOftenSatisfied
 
 =============================================================================
 \* Modification History
-\* Last modified Thu Nov 16 15:09:41 PST 2017 by nanzhu
+\* Last modified Thu Nov 16 16:07:22 PST 2017 by nanzhu
 \* Created Thu Nov 16 12:47:26 PST 2017 by nanzhu
