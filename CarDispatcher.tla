@@ -69,12 +69,13 @@ PassengerWillBePickedup ==
   \A p \in Passengers, C \in SUBSET Cars: C \in SUBSET unsat[p] ~> C \in SUBSET alloc[p]
 
 InfOftenSatisfied == 
-  \A p \in Passengers : []<>(unsat[p] = {})
+  /\ \A p \in Passengers : []<>(unsat[p] = {} /\ alloc[p] = {})
+  /\ \A c \in Cars : []<>(remaining[c] = Capacity)
   
 CarDispatcher == 
   /\ Init /\ [][Next]_vars
   /\ \A p \in Passengers: WF_vars(\E C \in SUBSET alloc[p]: Dropoff(p, C))
-  /\ \A p \in Passengers: SF_vars(\E C \in SUBSET unsat[p]: Pickup(p,C))
+  /\ \A p \in Passengers: WF_vars(\E C \in SUBSET unsat[p]: Pickup(p,C))
 
 THEOREM CarDispatcher => []TypeOK
 \* THEOREM CarDispatcher => []ResourceMutex
@@ -84,5 +85,5 @@ THEOREM CarDispatcher => InfOftenSatisfied
 
 =============================================================================
 \* Modification History
-\* Last modified Fri Nov 17 11:59:40 PST 2017 by nanzhu
+\* Last modified Fri Nov 17 13:04:17 PST 2017 by nanzhu
 \* Created Thu Nov 16 12:47:26 PST 2017 by nanzhu
